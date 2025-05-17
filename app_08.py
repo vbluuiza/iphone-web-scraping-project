@@ -23,9 +23,9 @@ def parse_page(html):
     soup = BeautifulSoup(html, 'html.parser')
     product_name = soup.find('h1', class_= 'ui-pdp-title').get_text()
     prices:list = soup.find_all('span', class_='andes-money-amount__fraction')
-    old_price = prices[0].get_text(strip=True).replace('.', '')
-    new_price = prices[1].get_text(strip=True).replace('.', '')
-    installment_price = prices[2].get_text(strip=True).replace('.', '')
+    old_price = prices[0].get_text().replace('.', '')
+    new_price = prices[1].get_text().replace('.', '')
+    installment_price = prices[2].get_text().replace('.', '')
 
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -61,22 +61,17 @@ def save_to_database(conn, products_info):
 
 def get_max_price(conn):
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT new_price, timestamp
-        FROM prices
-        WHERE new_price = (SELECT MAX(new_price) FROM prices)
-        ORDER BY id DESC
-        LIMIT 1
-    """)
+    
+    cursor.execute("SELECT MAX(new_price), timestamp FROM prices")
     result = cursor.fetchone()
-    if result and result[0] is not None:
-        return result[0], result[1]
-    return None, None
+    return result[0], result[1]
     
 async def send_telegram_message(text):
     await bot.send_message(chat_id=CHAT_ID, text=text)
     
 async def main():
+    
+    # database configuration and setup
     conn = create_connection()
     setup_database(conn)
     
@@ -86,30 +81,24 @@ async def main():
             # do the request and the page parsing
             page_content = fetch_page()
             products_info = parse_page(page_content)
-            save_to_database(conn, products_info)
             current_price = products_info["new_price"]
             
             # get max price 
             max_price, max_timestamp = get_max_price(conn)
             
             if current_price > max_price:
-                message = f'Preço maior detectado: {current_price}'
-                print(message)
-                await send_telegram_message(message)
-                
+                print(f'Preço maior detectado: {current_price}')
+                await send_telegram_message(f'Preço maior detectado: {current_price}')
                 max_price = current_price # max price update
                 max_timestamp = products_info['timestamp'] # max price timestamp update
             else:
-                message = f'O maior preço registado é {max_price} em {max_timestamp}'
-                print(message)
-                await send_telegram_message(message)
+                print(f'O maior preço registado é {max_price} em {max_timestamp}')
+                await send_telegram_message(f'O maior preço registado é {max_price} em {max_timestamp}')
 
             # save the data in the database
             save_to_database(conn, products_info)
             print('DADOS SALVOS NO BANCO DE DADOS')
-            
             await asyncio.sleep(10)
-
     except KeyboardInterrupt:
         print("Parando a execução...")
     finally:
