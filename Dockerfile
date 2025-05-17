@@ -14,5 +14,7 @@ RUN pip install --upgrade pip && \
 # Copy the rest of the application code
 COPY . .
 
+EXPOSE 5432
+
 # Define the default command to run the application
 CMD ["python", "app_08.py"]
