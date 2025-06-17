@@ -1,20 +1,17 @@
-# Use the official Python 3.13 slim image
-FROM python:3.13-slim
+# Usa uma imagem oficial do Python como base
+FROM python:3.11-slim
 
-# Set the working directory inside the container
+# Define o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copy the dependency file into the container
+# Copia os arquivos de requisitos para o diretório de trabalho
 COPY requirements.txt .
 
-# Install dependencies
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Instala as dependências do projeto
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
+# Copia todos os arquivos do projeto para o diretório de trabalho no container
 COPY . .
 
-EXPOSE 5432
-
-# Define the default command to run the application
-CMD ["python", "app_08.py"]
+# Comando padrão para executar o script principal
+CMD ["python", "iphone-scraping.py"]
